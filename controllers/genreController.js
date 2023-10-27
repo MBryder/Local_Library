@@ -4,20 +4,14 @@ const async = require("async");
 const { body, validationResult } = require("express-validator");
 
 // Display list of all Genre.
-exports.genre_list = function (req, res, next) {
-  Genre.find()
-    .sort("name")
-    .exec(function (err, list_genre) {
-      if (err) {
-        return next(err);
-      }
-      //Successful, so render
-      res.render("genre_list", {
-        title: "Genre List",
-        genre_list: list_genre,
-      });
-    });
-};
+exports.genre_list = (async (req, res, next) => {
+  const allGenres = await Genre.find().exec();
+  console.log(allGenres[0] + "hej");
+  res.render("genre_list", {
+    title: "Genre List",
+    genre_list: allGenres,
+  });
+});
 
 // Display detail page for a specific Genre.
 exports.genre_detail = (req, res, next) => {

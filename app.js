@@ -25,15 +25,18 @@ app.use(limiter);
 
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', false);
-//const mongoDB = "mongodb://mongo:OW97xbwqZInWKbs8NaWB@containers-us-west-175.railway.app:7105";
-//const mongoDB = "mongodb://mongo:0qIGfUbzj7dZJMj6dHBh@containers-us-west-123.railway.app:7717";
 const dev_db_url =
-  "mongodb+srv://your_user_name:your_password@cluster0.lz91hw2.mongodb.net/local_library?retryWrites=true&w=majority";
+    "mongodb+srv://Mamarcus:kodeord123@cluster0.wtuk3as.mongodb.net/";
 const mongoDB = process.env.MONGODB_URI || dev_db_url;
 
 main().catch(err => console.log(err));
 async function main() {
-  await mongoose.connect(mongoDB);
+  await mongoose.connect(mongoDB).then(() => {
+    console.log("Mongodb connected");
+  })
+  .catch(() => {
+    console.log("failled to connect mongo");
+  });
 }
 
 

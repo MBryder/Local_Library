@@ -6,48 +6,41 @@ const { body, validationResult } = require("express-validator");
 
 const async = require("async");
 
-exports.index = (req, res) => {
-  async.parallel(
-    {
-      book_count(callback) {
-        Book.countDocuments({}, callback); // Pass an empty object as match condition to find all documents of this collection
-      },
-      book_instance_count(callback) {
-        BookInstance.countDocuments({}, callback);
-      },
-      book_instance_available_count(callback) {
-        BookInstance.countDocuments({ status: "Available" }, callback);
-      },
-      author_count(callback) {
-        Author.countDocuments({}, callback);
-      },
-      genre_count(callback) {
-        Genre.countDocuments({}, callback);
-      },
-    },
-    (err, results) => {
-      res.render("index", {
-        title: "Local Library Home",
-        error: err,
-        data: results,
-      });
-    }
-  );
-};
+exports.index = (async (req, res, next) => {
+  // Get details of books, book instances, authors and genre counts (in parallel)
+  const [
+    numBooks,
+    numBookInstances,
+    numAvailableBookInstances,
+    numAuthors,
+    numGenres,
+  ] = await Promise.all([
+    Book.countDocuments({}).exec(),
+    BookInstance.countDocuments({}).exec(),
+    BookInstance.countDocuments({ status: "Available" }).exec(),
+    Author.countDocuments({}).exec(),
+    Genre.countDocuments({}).exec(),
+  ]);
+
+  res.render("index", {
+    title: "Local Library Home",
+    book_count: numBooks,
+    book_instance_count: numBookInstances,
+    book_instance_available_count: numAvailableBookInstances,
+    author_count: numAuthors,
+    genre_count: numGenres,
+  });
+});
 
 // Display list of all Books.
-exports.book_list = function (req, res, next) {
-  Book.find({}, "title author")
+exports.book_list = (async (req, res, next) => {
+  const allBooks = await Book.find({}, "title author")
     .sort({ title: 1 })
     .populate("author")
-    .exec(function (err, list_books) {
-      if (err) {
-        return next(err);
-      }
-      //Successful, so render
-      res.render("book_list", { title: "Book List", book_list: list_books });
-    });
-};
+    .exec();
+
+  res.render("book_list", { title: "Book List", book_list: allBooks });
+});
 
 // Display detail page for a specific book.
 exports.book_detail = (req, res, next) => {
@@ -84,29 +77,22 @@ exports.book_detail = (req, res, next) => {
 };
 
 // Display book create form on GET.
-exports.book_create_get = (req, res, next) => {
+exports.book_create_get = (async(req, res, next) => {
   // Get all authors and genres, which we can use for adding to our book.
-  async.parallel(
-    {
-      authors(callback) {
-        Author.find(callback);
-      },
-      genres(callback) {
-        Genre.find(callback);
-      },
-    },
-    (err, results) => {
-      if (err) {
-        return next(err);
-      }
-      res.render("book_form", {
-        title: "Create Book",
-        authors: results.authors,
-        genres: results.genres,
-      });
-    }
-  );
-};
+  const [
+    allAuthors,
+    allGenre,
+  ] = await Promise.all([
+    Author.find().exec(),
+    Genre.find().exec(),
+  ]);
+  
+  res.render("book_form", {
+    title: "Create Book",
+    authors: allAuthors,
+    genres: allGenre,
+  });
+});
 
 // Handle book create on POST.
 exports.book_create_post = [

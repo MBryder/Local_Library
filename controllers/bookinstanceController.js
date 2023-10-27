@@ -3,20 +3,14 @@ const { body, validationResult } = require("express-validator");
 const Book = require("../models/book");
 
 // Display list of all BookInstances.
-exports.bookinstance_list = function (req, res, next) {
-  BookInstance.find()
-    .populate("book")
-    .exec(function (err, list_bookinstances) {
-      if (err) {
-        return next(err);
-      }
-      // Successful, so render
-      res.render("bookinstance_list", {
-        title: "Book Instance List",
-        bookinstance_list: list_bookinstances,
-      });
-    });
-};
+exports.bookinstance_list = (async (req, res, next) => {
+  const allBookInstances = await BookInstance.find().populate("book").exec();
+
+  res.render("bookinstance_list", {
+    title: "Book Instance List",
+    bookinstance_list: allBookInstances,
+  });
+});
 
 // Display detail page for a specific BookInstance.
 exports.bookinstance_detail = (req, res, next) => {
@@ -41,18 +35,14 @@ exports.bookinstance_detail = (req, res, next) => {
 };
 
 // Display BookInstance create form on GET.
-exports.bookinstance_create_get = (req, res, next) => {
-  Book.find({}, "title").exec((err, books) => {
-    if (err) {
-      return next(err);
-    }
+exports.bookinstance_create_get = (async(req, res, next) => {
+  const books = await Book.find({}, "title").exec()
     // Successful, so render.
     res.render("bookinstance_form", {
       title: "Create BookInstance",
       book_list: books,
     });
   });
-};
 
 // Handle BookInstance create on POST.
 exports.bookinstance_create_post = [
